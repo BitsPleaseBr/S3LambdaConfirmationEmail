@@ -61,9 +61,10 @@ public class ConfirmationEmail {
 
       // Edita o template
       doc.select("name").first().text(parser.getNome());
-      doc.select("link").first().text(confirmationUrl);
+      doc.select("a").first().attr("href", confirmationUrl);
 
       HtmlEmail.setHtmlMsg(doc.toString());
+      System.out.println("Email configurado com sucesso");
     } catch (Exception e) {
       System.out.println("Erro ao configurar email");
       e.printStackTrace();
