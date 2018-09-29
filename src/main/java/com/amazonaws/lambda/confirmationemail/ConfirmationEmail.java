@@ -1,11 +1,16 @@
 package com.amazonaws.lambda.confirmationemail;
 
 import java.io.File;
+import java.io.IOException;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.S3Object;
 
 public class ConfirmationEmail {
   private final String fromAdress = System.getenv("fromAdress");
@@ -53,7 +58,7 @@ public class ConfirmationEmail {
 
     try {
       // Configura o html do email
-      File template = new File("EmailTemplate.html");
+      File template = getTemplateFromS3();
       Document doc = Jsoup.parse(template, "UTF-8", "");
 
       // Gera link de confirmação
@@ -71,5 +76,24 @@ public class ConfirmationEmail {
     }
   }
 
+  private File getTemplateFromS3() {
+    
+    S3Object templateFile = AmazonS3ClientBuilder.standard().withRegion(Regions.SA_EAST_1).build().getObject(System.getenv("templateBucket"), System.getenv("templateFile"));
+    File template = null;
+    
+    try {
+      
+      template = File.createTempFile("template", "html");
+      template.setWritable(true);
+      FileUtils.copyInputStreamToFile(templateFile.getObjectContent(), template);
+    } catch (IOException e) {
+      
+      System.out.println("Não foi possível obter o template pelo S3");
+      e.printStackTrace();
+    }
+    
+    return template;
+  }
+  
   private ConfirmationEmail() {}
 }
